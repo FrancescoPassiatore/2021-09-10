@@ -5,21 +5,82 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import it.polito.tdp.yelp.model.Business;
 import it.polito.tdp.yelp.model.Review;
 import it.polito.tdp.yelp.model.User;
 
 public class YelpDao {
 	
+	public Map<Business,Double> getAllReviews (Map<String,Business> map,double x){
+		
+		String sql = "SELECT b.business_id , AVG(b.stars) as avg "
+				+ "FROM yelp.business b "
+				+ "Group BY b.business_id "
+				+ "HAVING avg> ?";
+		
+		Map<Business,Double> result = new HashMap<Business,Double>();
+		Connection conn = DBConnect.getConnection();
+
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setDouble(1, x);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+				result.put(map.get(res.getString("business_id")),res.getDouble("avg"));
+			}
+			res.close();
+			st.close();
+			conn.close();
+			return result;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 	
-	public List<Business> getAllBusiness(){
-		String sql = "SELECT * FROM Business";
+	public List<String> getAllCities(){
+		String sql = "SELECT DISTINCT b.city "
+				+ "	FROM yelp.business b "
+				+ "	ORDER BY b.city ";
+		List<String> result = new ArrayList<String>();
+		Connection conn = DBConnect.getConnection();
+
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+				result.add(res.getString("city"));
+			}
+			res.close();
+			st.close();
+			conn.close();
+			return result;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	
+	
+	
+	public List<Business> getAllBusiness(String city){
+		
+		String sql = "SELECT * "
+				+ "FROM yelp.business b "
+				+ "WHERE b.city = ? ";
 		List<Business> result = new ArrayList<Business>();
 		Connection conn = DBConnect.getConnection();
 
 		try {
 			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, city);
 			ResultSet res = st.executeQuery();
 			while (res.next()) {
 
